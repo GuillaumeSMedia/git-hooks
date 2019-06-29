@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""Simple Pre-Commit check
+   for PHP/JS/CSS/SCSS projects
+"""
+
+__author__ = "Guillaume C."
+__copyright__ = "Copyright 2019, Spicle Labs"
+__license__ = "GPL"
+__version__ = "1.0.1"
+__maintainer__ = "Guillaume C."
+__email__ = "lab@spicle.Com"
+__status__ = "Production"
+
+import sys, os, subprocess
+
+# All the script we want to run on pre-commit
+SCRIPTS = [
+    'pre-commit-code-quality.py'
+]
+
+result = 0
+
+# Current file's path
+dirpath = os.path.dirname(sys.argv[0])
+
+# Stash any changes to the working tree that are not going to be committed
+subprocess.call(['git', 'stash', '-u', '--keep-index'],
+                stdout=subprocess.PIPE)
+
+# Run the pre-commit scripts
+for script in SCRIPTS:
+    code = subprocess.call(dirpath + "/"+script)
+    # print ('Exit code: ' + str(code))
+    result += int(code)
+
+# Unstash changes to the working tree that we had stashed
+# subprocess.call(['git', 'reset', '--hard'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+subprocess.call(['git', 'stash', 'pop', '-q'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+# Avoid check note
+print
+if result:
+    print 'You can skip checks with the -n flag (git commit -n -m "Hello World")'
+else:
+    print '\x1b[6;30;42mAll clear... committing!\x1b[0m Go get a coffee ☕'
+
+print
+
+# print 'Final exit code: ' + str(code)
+
+sys.exit(result)
