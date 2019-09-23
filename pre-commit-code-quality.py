@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """Simple Pre-Commit check
@@ -37,11 +37,25 @@ CHECKS = [
         'check_type': 'PHP',
         'output': 'Checking syntax...',
         'command': 'phpcs',
+        'fullpath': os.path.expanduser('~') + '/.composer/vendor/bin/phpcs',
         'command_options': '--standard=PSR2 %s',
         'dependency_instructions': 'pear install PHP_CodeSniffer',
         'match_files': [r'.*\.php$'],
         'multi_files': True,
         'print_filename': True,
+    },
+    {
+        'check_type': 'PHP',
+        'output': 'Static Code Analysis with Phan',
+        'command': 'phan',
+        'fullpath': os.path.expanduser('~') + '/.composer/vendor/bin/phan',
+        'command_options': '-I %s',
+        'match_files': [r'.*\.php$'],
+        'multi_files': True,
+        'print_filename': True,
+        'environment': {
+            'PHAN_ALLOW_XDEBUG': 1
+        }
     },
     {
         'check_type': 'JS',
@@ -123,10 +137,12 @@ def check_files(files, check):
         return
 
     # Skip check if the parser/linter does not exist on this system
-    if not cmd_exists(check['command']):
+    command = check.get('fullpath') or check['command']
+
+    if not cmd_exists(command):
         print
         print(bcolors.WARNING + check['check_type'] + ' - Skipping check "' +
-              check['output'] + '": command "'+check['command']+'" is not present' + bcolors.ENDC)
+              check['output'] + '": command "' + command + '" is not present' + bcolors.ENDC)
 
         # Are there instructions on how to install the missing dependency?
         if 'dependency_instructions' in check:
@@ -142,9 +158,14 @@ def check_files(files, check):
     print
     print(check['check_type'] + ' - ' + check['output'])
 
+    # Set any required environment variables
+    if 'environment' in check:
+            for envKey in check['environment']:
+                os.environ[envKey] = str(check['environment'][envKey])
+
     # Run the test
     process = subprocess.Popen(
-        (check['command']+' ' + check['command_options']) % ' '.join(matched_files), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        (command + ' ' + check['command_options']) % ' '.join(matched_files), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out, err = process.communicate()
 
     # Any errors/output?
@@ -157,7 +178,7 @@ def check_files(files, check):
         print('\n'.join(output_lines))
 
         if err:
-            print(bcolors.FAIL + err + bcolors.ENDC)
+            print(bcolors.FAIL + str(err) + bcolors.ENDC)
         result = 1
 
     return result
@@ -175,8 +196,9 @@ def main(all_files):
         p = subprocess.Popen(
             ['git', 'status', '--porcelain'], stdout=subprocess.PIPE)
         out, err = p.communicate()
+
         for line in out.splitlines():
-            match = modified.match(line)
+            match = modified.match(line.decode('utf-8'))
             if match:
                 files.append(match.group('name'))
 
