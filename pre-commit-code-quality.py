@@ -38,7 +38,7 @@ CHECKS = [
         'output': 'Checking syntax...',
         'command': 'phpcs',
         'fullpath': os.path.expanduser('~') + '/.composer/vendor/bin/phpcs',
-        'command_options': '--standard=PSR2 %s',
+        'command_options': '--standard=PSR2 --exclude=Generic.Files.LineLength %s',
         'dependency_instructions': 'pear install PHP_CodeSniffer',
         'match_files': [r'.*\.php$'],
         'multi_files': True,
