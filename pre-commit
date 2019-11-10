@@ -13,7 +13,9 @@ __maintainer__ = "Guillaume C."
 __email__ = "lab@spicle.Com"
 __status__ = "Production"
 
-import sys, os, subprocess
+import sys
+import os
+import subprocess
 
 # All the script we want to run on pre-commit
 SCRIPTS = [
@@ -25,9 +27,10 @@ result = 0
 # Current file's path
 dirpath = os.path.dirname(sys.argv[0])
 
+# subprocess.call(['git', 'status'])
+
 # Stash any changes to the working tree that are not going to be committed
-subprocess.call(['git', 'stash', '-u', '--keep-index'],
-                stdout=subprocess.PIPE)
+subprocess.call(['git', 'stash', '-u', '--keep-index'], stdout=subprocess.PIPE)
 
 # Run the pre-commit scripts
 for script in SCRIPTS:
@@ -37,7 +40,7 @@ for script in SCRIPTS:
 
 # Unstash changes to the working tree that we had stashed
 # subprocess.call(['git', 'reset', '--hard'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-subprocess.call(['git', 'stash', 'pop', '-q'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+subprocess.call(['git', 'stash', 'pop'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 # Avoid check note
 print
